@@ -1,0 +1,45 @@
+version: "3.3"
+
+networks:
+  cargo_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.31.0/24
+
+services:
+  cargo_mongodb:
+    container_name: cargo_mongodb
+    image: mongo:6.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "root"
+      MONGO_INITDB_ROOT_PASSWORD: "root"
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+      - ./dump:/dump
+    logging:
+      driver: none
+    networks:
+      cargo_net:
+    ports:
+      - "27017:27017"
+
+  cargo_backend:
+    build:
+      context: .
+    container_name: cargo_backend
+    restart: always
+    volumes:
+      - ./django_backend:/app
+    ports:
+      - "80:80"
+    env_file:
+      - .env.local
+    networks:
+      cargo_net:
+    depends_on:
+      - cargo_mongodb
+
+volumes:
+  mongo_data:
